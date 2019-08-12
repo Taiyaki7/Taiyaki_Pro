@@ -1,0 +1,146 @@
+/*定義*/
+#define MAX_SPEED (3000) //モータ最高回転数[rpm]
+
+/*ピン設定*/
+#define PIN_LEFT_ENABLE   (0) //左モータESCON　動作許可信号ピン
+#define PIN_RIGHT_ENABLE  (0) //右モータESCON　動作許可信号ピン
+
+/*シリアル通信用*/
+int i = 0;
+char buf[20];
+int ch[5];
+
+
+/*グローバル変数定義*/
+
+
+float Motor_L_speed_ref;//左モータ速度指令値
+float Motor_R_speed_ref;//右モータ速度指令値
+float Motor_L_speed;//左モータ速度
+float Motor_R_speed;//右モータ速度
+
+
+void setup() {
+  // put your setup code here, to run once:
+ 
+ //set up Serial Port
+ Serial.begin(9600);
+ //set up for DAC
+ analogWriteResolution(12); //DACのビット設定
+
+
+ 
+ //set up for digitalPIN
+ pinMode(PIN_LEFT_ENABLE,OUTPUT);
+ pinMode(PIN_RIGHT_ENABLE,OUTPUT);
+ ENABLE_SET(0); //ESCON動作禁止
+}
+
+
+
+
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  ENABLE_SET(1); //ESCON動作許可
+ //速度指令値受け取り https://garchiving.com/comma-separated-by-arduino/
+if (Serial.available()) {
+    buf[i] = Serial.read();
+    if (buf[i] == 'e') {
+      buf[i] = '\0';
+      //Serial.println(buf);
+
+      ch[0] = atoi(strtok(buf, ","));
+      ch[1] = atoi(strtok(NULL, ","));
+      ch[2] = atoi(strtok(NULL, ","));
+
+      Serial.println(ch[0]);
+      Serial.println(ch[1]);
+      Serial.println(ch[2]);
+      i = 0;
+    }
+    else {
+      i++;
+    }
+  }
+//速度指令値を内部変数に代入
+Motor_L_speed = ch[1];
+Motor_R_speed = ch[2]; 
+ //左速度指令値リミット
+ if(Motor_L_speed_ref > MAX_SPEED)
+ {
+ Motor_L_speed_ref = MAX_SPEED;
+ }
+ else
+ {
+  Motor_L_speed_ref = Motor_L_speed_ref;
+ }
+ 
+ //右速度指令値リミット
+ if(Motor_R_speed_ref > MAX_SPEED)
+ {
+ Motor_R_speed_ref = MAX_SPEED;
+ }
+ else
+ {
+  Motor_R_speed_ref = Motor_R_speed_ref;
+ }
+
+ 
+
+ //速度指令値DACセット
+  DAC_set(Motor_L_speed_ref,Motor_R_speed_ref);
+}
+
+
+
+
+
+
+
+/****************************************************************************/
+/*ローカル関数
+******************************************************************************/
+
+ 
+/****************************************************************************
+ *関数名　　　　：DAC_set　DAC出力制御
+ *引数　　　　　：left 左車輪速度指令値　right　右車輪速度指令値
+ *戻り値　　　　：なし
+ *制御タイミング：速度指令値計算後
+****************************************************************************/
+float DAC_set(float left,float right)
+{
+  float DAC_LEFT = 0;
+  float DAC_RIGHT = 0;
+  DAC_LEFT  = left  / MAX_SPEED  * 2048; //最高速度で規格化＆12bit化
+  DAC_RIGHT = right /MAX_SPEED  * 2048; 
+  //DAC出力書き込み
+  analogWrite(DAC0, DAC_LEFT);
+  analogWrite(DAC1, DAC_RIGHT);
+
+ }
+
+ /****************************************************************************
+ *関数名　　　　：ESCON＿ENALBE
+ *引数　　　　　：ENABLE 動作フラグ
+ *戻り値　　　　：なし
+ *制御タイミング：動作開始時
+****************************************************************************/
+float ENABLE_SET(float ENABLE_flag)
+{
+ if(ENABLE_flag = 1)
+ {
+  //ESCON 動作許可
+  digitalWrite(PIN_LEFT_ENABLE,HIGH);
+  digitalWrite(PIN_RIGHT_ENABLE,HIGH); 
+  }
+  else
+  {
+  //ESCO動作禁止
+  digitalWrite(PIN_LEFT_ENABLE,LOW);
+  digitalWrite(PIN_RIGHT_ENABLE,LOW); 
+  }
+ 
+}
+
