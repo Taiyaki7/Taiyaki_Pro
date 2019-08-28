@@ -9,6 +9,7 @@
 int i = 0;
 char buf[20];
 int ch[5];
+int ch_send[5];
 
 
 /*グローバル変数定義*/
@@ -54,9 +55,14 @@ if (Serial.available()) {
       ch[1] = atoi(strtok(NULL, ","));
       ch[2] = atoi(strtok(NULL, ","));
 
-      Serial.println(ch[0]);
-      Serial.println(ch[1]);
-      Serial.println(ch[2]);
+
+      Serial.print(ch_send[0]);
+      Serial.print(",");
+      Serial.print(ch_send[1]);
+      Serial.print(",");
+      Serial.print(ch_send[2]);
+      Serial.print(",");
+      Serial.print("e");
       i = 0;
     }
     else {
